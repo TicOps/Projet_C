@@ -53,3 +53,17 @@ t_bmp8 * bmp8_loadImage(const char * filename){
 
     return img;
 };
+
+int bmp8_saveImage(const char *filename, t_bmp8 *img){
+
+    //Ouvrir le fichier en écriture binaire
+    FILE * file = fopen(filename,"wb");
+    if(file!){
+        printf("Erreur : Impossible de créer le fichier %s\n",filename);
+        return 0;
+    }
+
+    //Ecriture du header (54 octets)
+    
+}
+
