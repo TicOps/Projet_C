@@ -64,6 +64,29 @@ int bmp8_saveImage(const char *filename, t_bmp8 *img){
     }
 
     //Ecriture du header (54 octets)
-    
+    if(fwrite(img->header, sizeof(unsigned char), 54, file) != 54){
+        printf("Erreur de lors de l'écriture de l'en-tête !\n");
+        fclose(file);
+        return 0;
+    }
+
+    //Ecriture de la palette de couleur (1024 octets pour 256 couleurs * 4)
+    if(fwrite(img->colorTable, sizeof(unsigned char), 1024, file) != 1024){
+        printf("Erreur lors de l'écriture de la palette de couleurs !\n");
+        fclose(file);
+        return 0;
+    }
+
+    //Ecriture des données de pixels (width * height octets)
+    if(fwrite(img->data, sizeof(unsigned char), img->dataSize, file) != img->dataSize){
+        printf("Erreur lors de l'écriture des données de l'image !\n");
+        fclose(file);
+        return 0;
+    }
+
+    //Tout s'est bien passé, on ferme le fichier
+    printf("Sauvegarde réussie !\n")
+    fclose(file);
+    return 1;
 }
 
