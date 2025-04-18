@@ -90,3 +90,26 @@ int bmp8_saveImage(const char *filename, t_bmp8 *img){
     return 1;
 }
 
+void bmp8_free(t_bmp8 * img){
+    //On vérifie que le pointeur n'est pas NULL pour éviter les erreurs
+    if(img){
+        if(img->data){
+            //On vient libérer la mémoire des pixels  allouées par malloc dans bmp8_loadImage
+            free(img->data);
+        }
+        //On vient libérer la structure en elle-même. 
+        free(img);
+    }
+}
+
+void bmp8_printInfo(t_bmp8 *img){
+    if(!img){
+        printf("Erreur : image non chargée !\n");
+        return;
+    }
+    printf("Image Info :\n");
+    printf("Width : %u\n",img->width);
+    printf("Height : %u\n",img->height);
+    printf("Color Depth : %u\n",img->colorDepth);
+    printf("Data Size : %u\n",img->dataSize);
+}
