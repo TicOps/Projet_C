@@ -8,14 +8,14 @@ t_bmp8 * bmp8_loadImage(const char * filename){
     //Ouverture du fichier en mode read binary
     FILE *file = fopen(filename, "rb");
     if (!file){
-        printf("Erreur : impossible d'ouvrir le fichier %s\n",filename);
+        printf("Error : Can't open file %s\n",filename);
         return NULL;
     }
 
     //Allocation de la structure
     t_bmp8 *img = (t_bmp8*)malloc(sizeof(t_bmp8));
     if (!img){
-        printf("Erreur d'allocation mémoire\n");
+        printf("Error : Memory allocation\n");
         return NULL;
     }
 
@@ -28,7 +28,7 @@ t_bmp8 * bmp8_loadImage(const char * filename){
     img->colorDepth = *(unsigned short *)&img->header[28];
 
     if (img->colorDepth !=8){
-        printf("Erreur : image non supportée (doit être en 8 bit)\n");
+        printf("Error : unsupported picture (must be on 8 bits)\n");
         free(img);
         fclose(file);
         return NULL;
@@ -41,7 +41,7 @@ t_bmp8 * bmp8_loadImage(const char * filename){
     img->dataSize = img->width * img->height;
     img->data = (unsigned char *)malloc(img->dataSize);
     if (!img->data){
-        printf("Erreur d'allocation mémoire pour les pixels\n");
+        printf("Error : Memory allocation\n");
         free(img);
         fclose(file);
         return NULL;
@@ -51,6 +51,7 @@ t_bmp8 * bmp8_loadImage(const char * filename){
     fread(img->data, sizeof(unsigned char),img->dataSize, file);
     fclose(file);
 
+    printf("Succesfully loaded ! \n");
     return img;
 };
 
@@ -59,36 +60,36 @@ void bmp8_saveImage(const char *filename, t_bmp8 *img){
     //Ouvrir le fichier en écriture binaire
     FILE * file = fopen(filename,"wb");
     if(!file){
-        printf("Erreur : Impossible de créer le fichier %s\n",filename);
+        printf("Error : Can't create the file %s\n",filename);
         return;
     }
 
     //Ecriture du header (54 octets)
     if(fwrite(img->header, sizeof(unsigned char), 54, file) != 54){
-        printf("Erreur de lors de l'écriture de l'en-tête !\n");
+        printf("Error during writting the header !\n");
         fclose(file);
         return;
     }
 
     //Ecriture de la palette de couleur (1024 octets pour 256 couleurs * 4)
     if(fwrite(img->colorTable, sizeof(unsigned char), 1024, file) != 1024){
-        printf("Erreur lors de l'écriture de la palette de couleurs !\n");
+        printf("Error during writting the color table !\n");
         fclose(file);
         return;
     }
 
     //Ecriture des données de pixels (width * height octets)
     if(fwrite(img->data, sizeof(unsigned char), img->dataSize, file) != img->dataSize){
-        printf("Erreur lors de l'écriture des données de l'image !\n");
+        printf("Error during writting picture's data !\n");
         fclose(file);
         return;
     }
 
     //Tout s'est bien passé, on ferme le fichier
-    printf("Sauvegarde réussie !\n");
+    printf("Succesfully saved !\n");
     fclose(file);
     return;
-}
+};
 
 void bmp8_free(t_bmp8 * img){
     //On vérifie que le pointeur n'est pas NULL pour éviter les erreurs
@@ -100,18 +101,73 @@ void bmp8_free(t_bmp8 * img){
         //On vient libérer la structure en elle-même. 
         free(img);
     }
-}
+};
 
 void bmp8_printInfo(t_bmp8 *img){
     //Si l'image est vide erreur
     if(!img){
-        printf("Erreur : image non chargée !\n");
+        printf("Error : No picture loaded !\n");
         return;
     }
     //Affiche les info de type unsigned int.
-    printf("Image Info :\n");
-    printf("Width : %u\n",img->width);
-    printf("Height : %u\n",img->height);
-    printf("Color Depth : %u\n",img->colorDepth);
-    printf("Data Size : %u\n",img->dataSize);
-}
+    printf("Picture's datas :\n");
+    printf("Width -> %u\n",img->width);
+    printf("Height -> %u\n",img->height);
+    printf("Color Depth -> %u\n",img->colorDepth);
+    printf("Data Size -> %u\n",img->dataSize);
+};
+
+void bmp8_negative(t_bmp8 *img){
+    // On check qu'il y a bien une img et des données pour éviter les erreurs
+    if(!img || !img->data){
+        printf("Error : No picture loaded or missing datas !\n");
+        return;
+    }
+
+    unsigned int i;
+    // Parcous via une boucle for sur chaque pixel de l'image
+    for (i = 0; i< img->dataSize; i++){
+        img->data[i] = (unsigned char)(255 - img->data[i]);
+    }
+};
+
+void bmp8_brightness(t_bmp8 * img, int value){
+    // On check qu'il y a bien une img et des données pour éviter les erreurs
+    if(!img || !img->data){
+        printf("Error : No picture loaded or missing datas !\n");
+        return;
+    }
+
+    unsigned int i;
+    for(i=0; i < img->dataSize; ++i){
+        int p = img->data[i] + value; // La nouvelle valeure potentielle
+        
+        if(p>255){
+            p = 255;
+        } else if(p<0){
+            p = 0;
+        }
+        // Affectation de la nouvelle valeure de chaque pixel
+        img->data[i] = (unsigned char)p;
+    }
+};
+
+void bmp8_treshold(t_bmp8 * img, int treshold){
+    // On check qu'il y a bien une img et des données pour éviter les erreurs
+    if(!img || !img->data){
+        printf("Error : No picture loaded or missing datas !\n");
+        return;
+    }
+
+    if(treshold < 0){
+        treshold = 0;
+    } else if(treshold > 255){
+        treshold = 255;
+    }
+
+    unsigned int i;
+    for(i = 0; i < img->dataSize; ++i){
+        img->data[i] = (unsigned char)(img->data[i] >= treshold ? 255 : 0);
+
+    }
+};
