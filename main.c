@@ -139,6 +139,28 @@ int main(){
                 }
                 free(outline);
             }
+
+            if (filtre == 8) {
+                // Emboss
+                float **emboss = (float **)malloc(3 * sizeof(float *));
+                for (int i = 0; i < 3; i++) {
+                    emboss[i] = (float *)malloc(3 * sizeof(float));
+                }
+            
+                // Remplissage du noyau
+                emboss[0][0] = -2.0; emboss[0][1] = -1.0; emboss[0][2] = 0.0;
+                emboss[1][0] = -1.0; emboss[1][1] = 1.0; emboss[1][2] = 1.0;
+                emboss[2][0] = 0.0; emboss[2][1] = 1.0; emboss[2][2] = 2.0;
+            
+                bmp8_applyFilter(fichier, emboss, 3);
+                printf("Emboss applied\n");
+            
+                // Libération de la mémoire
+                for (int i = 0; i < 3; i++) {
+                    free(emboss[i]);
+                }
+                free(emboss);
+            }
         }
         
         //Quatrième cas, on affiche les informations de l'image
