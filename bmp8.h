@@ -18,9 +18,12 @@ void bmp8_free(t_bmp8 * img);
 void bmp8_printInfo(t_bmp8 * img);
 
 
-//Partie 2
+//Partie 1.3
 void bmp8_negative(t_bmp8 * img);
 void bmp8_brightness(t_bmp8 * img, int value);
 void bmp8_treshold(t_bmp8 * img, int treshold);
+
+//Partie 1.4
+void bmp8_applyFilter(t_bmp8 * img, float ** kernel, int kernelSize);
 
 #endif

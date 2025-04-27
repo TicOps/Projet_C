@@ -1,6 +1,7 @@
 //Ecrire le code test
 #include "bmp8.h"
 #include <stdio.h>
+#include <stdlib.h>
 
 
 int main(){
@@ -29,7 +30,7 @@ int main(){
         //Troisième cas, application d'un filtre
         if(reponse == 3){
             //Choix du filtre à appliquer
-            printf("Choose a filter to apply :\n1. Negative\n2. Brightness\n3. Treshold\n4. Blur\n5. Gaussian Blur\n6. Sharpen\n7. Outline\n8. emboss\n9. Back\n");
+            printf("Choose a filter to apply :\n1. Negative\n2. Brightness\n3. Treshold\n4. Box blur\n5. Gaussian Blur\n6. Sharpen\n7. Outline\n8. emboss\n9. Back\n");
             scanf("%d",&filtre);
             printf("Your choice : %d\n-----------------------------------------------\n",filtre);
                 
@@ -54,9 +55,49 @@ int main(){
                 bmp8_treshold(fichier,value);
                 printf("Treshold applied\n");
             }
+
+            if (filtre == 4) {
+                // Box blur
+                float **boxBlur = (float **)malloc(3 * sizeof(float *));
+                for (int i = 0; i < 3; i++) {
+                    boxBlur[i] = (float *)malloc(3 * sizeof(float));
+                    for (int j = 0; j < 3; j++) {
+                        boxBlur[i][j] = 1.0/9.0;
+                    }
+                }
+                bmp8_applyFilter(fichier, boxBlur, 3);
+                printf("Box blur applied\n");
+                // Libération de la mémoire
+                for (int i = 0; i < 3; i++) {
+                    free(boxBlur[i]);
+                }
+                free(boxBlur);
+            }
+
+            if (filtre == 5) {
+                // Gaussian blur
+                float **gaussianBlur = (float **)malloc(3 * sizeof(float *));
+                for (int i = 0; i < 3; i++) {
+                    gaussianBlur[i] = (float *)malloc(3 * sizeof(float));
+                }
+            
+                // Remplissage du noyau
+                gaussianBlur[0][0] = 1.0/16.0; gaussianBlur[0][1] = 2.0/16.0; gaussianBlur[0][2] = 1.0/16.0;
+                gaussianBlur[1][0] = 2.0/16.0; gaussianBlur[1][1] = 4.0/16.0; gaussianBlur[1][2] = 2.0/16.0;
+                gaussianBlur[2][0] = 1.0/16.0; gaussianBlur[2][1] = 2.0/16.0; gaussianBlur[2][2] = 1.0/16.0;
+            
+                bmp8_applyFilter(fichier, gaussianBlur, 3);
+                printf("Gaussian blur applied\n");
+            
+                // Libération de la mémoire
+                for (int i = 0; i < 3; i++) {
+                    free(gaussianBlur[i]);
+                }
+                free(gaussianBlur);
+            } 
         }
         
-        //Cinquième cas, on affiche les informations de l'image
+        //Quatrième cas, on affiche les informations de l'image
         if(reponse == 4){
             bmp8_printInfo(fichier);
         }

@@ -171,3 +171,62 @@ void bmp8_treshold(t_bmp8 * img, int treshold){
 
     }
 };
+
+// Application des filtres via convolution
+void bmp8_applyFilter(t_bmp8 * img, float ** kernel, int kernelSize) {
+    // Vérification des paramètres
+    if (!img || !img->data || !kernel) {
+        printf("Error: Invalid parameters for filter application!\n");
+        return;
+    }
+
+    // Calcul du rayon du kernel (n)
+    int radius = kernelSize / 2;
+    
+    // Création d'une copie des données pour éviter de modifier l'image pendant le traitement
+    unsigned char *tempData = (unsigned char *)malloc(img->dataSize);
+    if (!tempData) {
+        printf("Error: Memory allocation for filter application!\n");
+        return;
+    }
+    
+    // Copie des données originales
+    memcpy(tempData, img->data, img->dataSize);
+    
+    // Application du filtre
+    int x, y, i, j;
+    for (y = radius; y < img->height - radius; y++) {
+        for (x = radius; x < img->width - radius; x++) {
+            float sum = 0.0;
+            
+            // Application du noyau de convolution
+            for (j = -radius; j <= radius; j++) {
+                for (i = -radius; i <= radius; i++) {
+                    // Position du pixel dans l'image originale
+                    int imgX = x + i;
+                    int imgY = y + j;
+                    
+                    // Position dans le noyau (décalé pour avoir des indices positifs)
+                    int kernelX = i + radius;
+                    int kernelY = j + radius;
+                    
+                    // Indice linéaire dans le tableau de données
+                    int index = imgY * img->width + imgX;
+                    
+                    // Somme pondérée
+                    sum += tempData[index] * kernel[kernelY][kernelX];
+                }
+            }
+            
+            // Gestion des valeurs hors limites
+            if (sum > 255) sum = 255;
+            if (sum < 0) sum = 0;
+            
+            // Mise à jour du pixel dans l'image
+            img->data[y * img->width + x] = (unsigned char)sum;
+        }
+    }
+    
+    // Libération de la mémoire temporaire
+    free(tempData);
+}
