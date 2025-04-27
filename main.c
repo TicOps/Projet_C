@@ -95,6 +95,50 @@ int main(){
                 }
                 free(gaussianBlur);
             } 
+
+            if (filtre == 6) {
+                // Sharpen
+                float **sharpen = (float **)malloc(3 * sizeof(float *));
+                for (int i = 0; i < 3; i++) {
+                    sharpen[i] = (float *)malloc(3 * sizeof(float));
+                }
+            
+                // Remplissage du noyau
+                sharpen[0][0] = 0.0; sharpen[0][1] = -1.0; sharpen[0][2] = 0.0;
+                sharpen[1][0] = -1.0; sharpen[1][1] = 5.0; sharpen[1][2] = -1.0;
+                sharpen[2][0] = 0.0; sharpen[2][1] = -1.0; sharpen[2][2] = 0.0;
+            
+                bmp8_applyFilter(fichier, sharpen, 3);
+                printf("Sharpen applied\n");
+            
+                // Libération de la mémoire
+                for (int i = 0; i < 3; i++) {
+                    free(sharpen[i]);
+                }
+                free(sharpen);
+            }
+
+            if (filtre == 7) {
+                // Outline
+                float **outline = (float **)malloc(3 * sizeof(float *));
+                for (int i = 0; i < 3; i++) {
+                    outline[i] = (float *)malloc(3 * sizeof(float));
+                }
+            
+                // Remplissage du noyau
+                outline[0][0] = -1.0; outline[0][1] = -1.0; outline[0][2] = -1.0;
+                outline[1][0] = -1.0; outline[1][1] = 8.0; outline[1][2] = -1.0;
+                outline[2][0] = -1.0; outline[2][1] = -1.0; outline[2][2] = -1.0;
+            
+                bmp8_applyFilter(fichier, outline, 3);
+                printf("Outline applied\n");
+            
+                // Libération de la mémoire
+                for (int i = 0; i < 3; i++) {
+                    free(outline[i]);
+                }
+                free(outline);
+            }
         }
         
         //Quatrième cas, on affiche les informations de l'image
