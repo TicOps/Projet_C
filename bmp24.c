@@ -1,4 +1,5 @@
 #include "bmp24.h"
+#include "utils.h"
 #include <stdio.h>      
 #include <stdlib.h>
 #include <stdint.h> 
@@ -87,4 +88,8 @@ void bmp24_free(t_bmp24 *img){
   free(img);
   printf("Image successfully released\n");
   return;
+}
+
+t_bmp24 * bmp24_loadImage(const char *filename){
+
 }
