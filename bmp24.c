@@ -90,6 +90,53 @@ void bmp24_free(t_bmp24 *img){
   return;
 }
 
-t_bmp24 * bmp24_loadImage(const char *filename){
 
+void bmp24_readPixelValue(t_bmp24 * image,int x,int y,FILE * file){
+
+}
+
+t_bmp24 * bmp24_loadImage(const char *filename){
+  FILE *file = fopen(filename, "rb");
+  if (file == NULL) {
+    printf("Error : could not open file %s\n", filename);
+    fclose(file);
+    return NULL;
+  }
+
+  t_bmp_header header;
+  file_rawRead(BITMAP_MAGIG, &header, sizeof(t_bmp_header), 1, file);
+  t_bmp_info header_info;
+  file_rawRead(HEADER_SIZE, header_info, sizeof(t_bmp_info), 1, file);
+
+  int width = header_info.width;
+  int height = header_info.height;
+  int colorDepth = header_info.bits;
+
+  t_bmp24 *img = bmp24_allocate(width, height, colorDepth);
+
+  img->header = header;
+  img->header_info = header_info;
+
+  img->data = bmp24_allocateDataPixels(img->width, img->height);
+  if (img->data == NULL) {
+    printf("Error : memory allocation failed for t_bmp24\n");
+    bmp24_free(img);
+    fclose(file);
+    return NULL;
+  }
+  fclose(file);
+  return img;
+}
+
+void bmp24_saveImage(t_bmp24 *img, const char *filename){
+  FILE *file = fopen(filename, "wb");
+  if (file == NULL) {
+    printf("Error : could not open file %s\n", filename);
+    fclose(file);
+    return;
+  }
+  file_rawWrite(BITMAP_MAGIG, &header, sizeof(t_bmp_header), 1, file);
+  file_rawWrite(HEADER_SIZE, &img->header_info, sizeof(t_bmp_info), 1, file);
+
+  fclose(file);
 }
