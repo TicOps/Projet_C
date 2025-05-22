@@ -52,3 +52,39 @@ void bmp24_freeDataPixels(t_pixel **pixels, int height) {
     printf("Pixel matrix successfully released\n");
 }
 
+t_bmp24 * bmp24_allocate(int width, int height, int colorDepth){
+  t_pixel **data = bmp24_allocateDataPixels(width, height);
+  if (data == NULL) {
+    printf("Error : memory allocation failed for t_pixel matrix\n");
+    free(data);
+    return NULL;
+  }
+  t_bmp24 *bmp24 = (t_bmp24 *)malloc(sizeof(t_bmp24));
+  if (!bmp24) {
+    printf("Error : t_bmp24 can't be allocated\n");
+    bmp24_free(data);
+    return NULL;
+  }
+  bmp24->width = width;
+  bmp24->height = height;
+  bmp24->colorDepth = colorDepth;
+  if (colorDepth != 24) {
+    printf("Error : invalid color depth (%d)\n", colorDepth);
+    bmp24_free(data);
+    return NULL;
+  }
+  return bmp24;
+}
+
+void bmp24_free(t_bmp24 *img){
+  if (!img) {
+    printf("Error : attempt to free a NULL pointer\n");
+    return;
+  }
+  if (img->data) {
+    bmp24_freeDataPixels(img->data, img->height);
+  }
+  free(img);
+  printf("Image successfully released\n");
+  return;
+}
