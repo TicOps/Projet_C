@@ -140,3 +140,22 @@ void bmp24_saveImage(t_bmp24 *img, const char *filename){
 
   fclose(file);
 }
+
+
+void bmp24_negative(t_bmp * img){
+  // Vérification des paramètres
+    if (!img || !img->data) {
+        printf("Error: No picture loaded or missing data!\n");
+        return;
+    }
+    
+    // Parcours de tous les pixels de l'image
+    for (int y = 0; y < img->height; y++) {
+        for (int x = 0; x < img->width; x++) {
+            // Inversion de chaque composante RGB
+            img->data[y][x].red = 255 - img->data[y][x].red;
+            img->data[y][x].green = 255 - img->data[y][x].green;
+            img->data[y][x].blue = 255 - img->data[y][x].blue;
+        }
+    }
+}
