@@ -9,11 +9,11 @@ int main(){
     int reponse, filtre, value,type;
     char file[100];
     t_bmp8 *fichier;
+    
+    //Affichage de l'interface en ligne de comande
+    printf("-----------------------------------------------\nWhat type of image do you want to process :\n1. bmp8\n2. bmp24\n3. Quit\n");
+    scanf("%d",&type);
     while(running){
-
-        //Affichage de l'interface en ligne de comande
-        printf("-----------------------------------------------\nWhat type of image do you want to process :\n1. bmp8\n2. bmp24\n3. Quit\n");
-        scanf("%d",&type);
         if(type == 1){
             printf("-----------------------------------------------\nChoose an option :\n1. Open a picture\n2. Save a picture\n3. Apply filters\n4. See picture's datas\n5. Quit\n");
             scanf("%d",&reponse);
@@ -176,7 +176,7 @@ int main(){
             if(reponse == 5){
                 //On libère la mémoire pour éviter les fuites de données
                 bmp8_free(fichier);
-                printf("Have a nice day ! ;)\n");
+                printf("--------------------------------------------------\n\n    +------------+\n    |    ^  ^    |\n    |     --     |\n    |    \\__/    |\n    +------------+\n\nHave a nice day ! ;)\n");
                 running = 0;
             }
         }
@@ -185,9 +185,9 @@ int main(){
             break;
         }
         else if(type == 3){
-            printf("--------------------------------------------------\n٩(^‿^)۶\nHave a nice day ! ;)\n");
+            printf("--------------------------------------------------\n\n    +------------+\n    |    ^  ^    |\n    |     --     |\n    |    \\__/    |\n    +------------+\n\nHave a nice day ! ;)\n");
             running = 0;
         }
-        return 0;
-    };
+    }
+    return 0;
 }
