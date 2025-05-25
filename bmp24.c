@@ -66,29 +66,31 @@ void bmp24_freeDataPixels(t_pixel **pixels, int height) {
 }
 
 t_bmp24 * bmp24_allocate(int width, int height, int colorDepth){
-  t_pixel **data = bmp24_allocateDataPixels(width, height);
-  if (data == NULL) {
-    printf("Error : memory allocation failed for t_pixel matrix\n");
-    free(data);
-    return NULL;
-  }
-  t_bmp24 *bmp24 = (t_bmp24 *)malloc(sizeof(t_bmp24));
-  if (!bmp24) {
-    printf("Error : t_bmp24 can't be allocated\n");
-    free(data);
-    bmp24_free(bmp24);
-    return NULL;
-  }
-  bmp24->width = width;
-  bmp24->height = height;
-  bmp24->colorDepth = colorDepth;
-  if (colorDepth != 24) {
-    printf("Error : invalid color depth (%d)\n", colorDepth);
-    free(data);
-    bmp24_free(bmp24);
-    return NULL;
-  }
-  return bmp24;
+    if (colorDepth != 24) {
+        printf("Error : invalid color depth (%d)\n", colorDepth);
+        return NULL;
+    }
+
+    t_bmp24 *bmp24 = (t_bmp24 *)malloc(sizeof(t_bmp24));
+    if (!bmp24) {
+        printf("Error : t_bmp24 can't be allocated\n");
+        return NULL;
+    }
+
+    t_pixel **data = bmp24_allocateDataPixels(width, height);
+    if (data == NULL) {
+        printf("Error : memory allocation failed for t_pixel matrix\n");
+        free(bmp24);
+        return NULL;
+    }
+
+    bmp24->data = data;
+
+    bmp24->width = width;
+    bmp24->height = height;
+    bmp24->colorDepth = colorDepth;
+
+    return bmp24;
 }
 
 void bmp24_free(t_bmp24 *img){
@@ -106,29 +108,93 @@ void bmp24_free(t_bmp24 *img){
 
 
 void bmp24_readPixelValue(t_bmp24 * image,int x,int y,FILE * file){
-  if (!(image->height%4 == 0) || !(image->width%4 == 0)) {
-    printf("Error : invalid image size (%d,%d)\n", image->height, image->width);
-    return;
-  }
-  int pos;
-  x = image->width - x * image->height;
-  pos = x + y;
-  uint32_t header_offset = HEADER_SIZE + INFO_SIZE + BITMAP_OFFSET;
-  t_pixel *pixel = (t_pixel *) malloc(sizeof(t_pixel));
-  if (file == NULL) {
-    printf("Error : could not open file");
-    fclose(file);
-    return;
-  }
-  file_rawRead(header_offset, &pixel, sizeof(t_pixel), 1, file);
-  uint8_t temp = pixel->red;
-  printf("pixel_value:%d,%d,%d\n", pixel->red, pixel->green, pixel->blue);
-  pixel->red = pixel->blue;
-  pixel->blue = temp;
-  printf("pixel_value:%d,%d,%d\n", pixel->red, pixel->green, pixel->blue);
-  free(pixel);
-  fclose(file);
+    if (image->height%4 != 0 || image->width%4 != 0) {
+        printf("Error : invalid image size (%d,%d)\n", image->height, image->width);
+        return;
+    }
 
+    if (x < 0 || x >= image->width || y < 0 || y >= image->height) {
+        printf("Error : wrong coordinate", x, y);
+        return;
+    }
+
+    int y_pos = image->height - y -1;
+
+    uint32_t header_offset = image->header.offset ;
+    uint32_t offset = header_offset + x*3 + 3*y_pos*image->width;
+
+    uint8_t pixel[3];
+
+    file_rawRead(offset, &pixel, sizeof(t_pixel), 1, file);
+
+    image->data[y][x].red = pixel[2];
+    image->data[y][x].green = pixel[1];
+    image->data[y][x].blue = pixel[0];
+
+}
+
+void bmp24_readPixelData (t_bmp24 * image, FILE * file) {
+    if (!image || !file) {
+        printf("invalid parameter");
+        return;
+    }
+    int i,j;
+    if (image->width > 0 && image->height > 0) {
+        for (i = 0; i < image->height; i++) {
+            for (j = 0; j < image->width; j++) {
+                bmp24_readPixelValue(image, j, i, file);
+
+            }
+        }
+    }else {
+        printf("Error : invalid image size (%d,%d)\n", image->width, image->height);
+        return;
+    }
+    printf("successfully reading %dx%d pixels\n", image->width, image->height);
+}
+
+void bmp24_writePixelValue(t_bmp24 * image, int x, int y, FILE * file) {
+    if (!image || !image->data || !file) {
+        printf("Error: Invalid parameters for writing pixel\n");
+        return;
+    }
+
+    if (x < 0 || x >= image->width || y < 0 || y >= image->height) {
+        printf("Error : wrong coordinate", x, y);
+        return;
+    }
+
+    // Dans un BMP, y=0 est en bas, donc on inverse
+    int y_pos = image->height - 1 - y;
+
+    uint32_t header_offset = image->header.offset;
+    uint32_t offset = header_offset + (y_pos * image->width * 3) + (x * 3);
+
+    // Format : RGB -> BGR
+    uint8_t bgr[3];
+    bgr[0] = image->data[y][x].blue;
+    bgr[1] = image->data[y][x].green;
+    bgr[2] = image->data[y][x].red;
+
+    file_rawWrite(offset, bgr, 1, 3, file);
+}
+
+void bmp24_writePixelData (t_bmp24 * image, FILE * file) {
+    if (!image || !file) {
+        printf("Error: Invalid parameters for writing pixel\n");
+        return;
+    }
+    int i,j;
+    if (image->width > 0 && image->height > 0) {
+        for (i = 0; i < image->height; i++) {
+            for (j = 0; j < image->width; j++) {
+                bmp24_writePixelValue(image, j, i, file);
+            }
+        }
+    }else {
+        printf("Error : invalid image size (%d,%d)\n", image->width, image->height);
+    }
+    printf("successfully writing %dx%d pixels\n", image->width, image->height);
 }
 
 t_bmp24 * bmp24_loadImage(const char *filename) {
@@ -142,13 +208,13 @@ t_bmp24 * bmp24_loadImage(const char *filename) {
     // Lire l'en-tête BMP depuis le début du fichier
     file_rawRead(BITMAP_MAGIC, &header, sizeof(t_bmp_header), 1, file);
 
-    // Vérifier le magic number BMP
+    // Vérifier le type de fichier BMP
     if (header.type != BMP_TYPE) {
         printf("Error: Not a valid BMP file (magic: 0x%X)\n", header.type);
         fclose(file);
         return NULL;
     }
-    printf("%d\n",sizeof(t_bmp_header));
+
     t_bmp_info header_info;
     // Lire les informations de l'image après l'en-tête principal
     file_rawRead(HEADER_SIZE, &header_info, sizeof(t_bmp_info), 1, file);
@@ -176,33 +242,43 @@ t_bmp24 * bmp24_loadImage(const char *filename) {
     img->header = header;
     img->header_info = header_info;
 
-    // Allouer les données pixel
-    img->data = bmp24_allocateDataPixels(img->width, img->height);
-    if (img->data == NULL) {
-        printf("Error : memory allocation failed for pixel data\n");
-        bmp24_free(img);
-        fclose(file);
-        return NULL;
-    }
+    bmp24_readPixelData(img, file);
 
     fclose(file);
+    printf("Image loaded successfully: %dx%d pixels\n", width, height);
     return img;
 }
 
 
-
 void bmp24_saveImage(t_bmp24 *img, const char *filename){
-  FILE *file = fopen(filename, "wb");
-  if (file == NULL) {
-    printf("Error : could not open file %s\n", filename);
-    fclose(file);
-    return;
-  }
-  file_rawWrite(BITMAP_MAGIC, &img->header, sizeof(t_bmp_header), 1, file);
-  file_rawWrite(HEADER_SIZE, &img->header_info, sizeof(t_bmp_info), 1, file);
 
-  fclose(file);
+    if (!img || !img->data) {
+        printf("Error: Invalid image or missing data\n");
+        return;
+    }
+
+    if (!filename) {
+        printf("Error: Invalid filename\n");
+        return;
+    }
+
+    FILE *file = fopen(filename, "wb");
+    if (file == NULL) {
+        printf("Error : could not open file %s for writing\n", filename);
+        return;
+    }
+
+    // Writing :
+    file_rawWrite(BITMAP_MAGIC, &img->header, sizeof(t_bmp_header), 1, file);
+
+    file_rawWrite(HEADER_SIZE, &img->header_info, sizeof(t_bmp_info), 1, file);
+
+    bmp24_writePixelData(img, file);
+
+    fclose(file);
+    printf("Image saved successfully to %s\n", filename);
 }
+
 
 void bmp24_negative(t_bmp24 * img){
   // Vérification des paramètres
@@ -420,12 +496,11 @@ void bmp24_boxBlur(t_bmp24 * img) {
 }
 
 int main(void){
-  t_bmp24 *img = bmp24_allocate(512,512,24);
-  char *filename = "flowers_color.bmp";
-  FILE *file = fopen(filename, "rb");
-  bmp24_readPixelValue(img,0,0,file);
-  fclose(file);
-  return 1;
+    char *filename = "flowers_color.bmp";
+    t_bmp24 *img = bmp24_loadImage(filename);
+    char *filename2 = "copy_flowers_color.bmp";
+    bmp24_saveImage(img,filename2);
+    return 1;
 }
 
 

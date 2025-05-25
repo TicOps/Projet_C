@@ -31,7 +31,7 @@ typedef struct {
 	uint16_t reserved1;
 	uint16_t reserved2;
 	uint32_t offset;
-} t_bmp_header;
+} __attribute__((packed)) t_bmp_header;
 
 typedef struct {
 	uint32_t size;
@@ -45,7 +45,7 @@ typedef struct {
 	int32_t yresolution;
 	uint32_t ncolors;
 	uint32_t importantcolors;
-} t_bmp_info;
+} __attribute__((packed)) t_bmp_info;
 
 typedef struct {
 	uint8_t red;
