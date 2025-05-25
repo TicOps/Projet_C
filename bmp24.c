@@ -1,10 +1,22 @@
 #include "bmp24.h"
-#include "utils.h"
 #include <stdio.h>      
 #include <stdlib.h>
 #include <stdint.h> 
 #include <string.h>     
 #include <math.h>   
+
+
+void file_rawRead (uint32_t position, void * buffer, uint32_t size, size_t n, FILE * file) {
+    fseek(file, position, SEEK_SET);
+    fread(buffer, size, n, file);
+}
+
+void file_rawWrite (uint32_t position, void * buffer, uint32_t size, size_t n, FILE * file) {
+    fseek(file, position, SEEK_SET);
+    fwrite(buffer, size, n, file);
+}
+
+/*---------------------------------------------------------------------------------------------*/
 
 
 t_pixel ** bmp24_allocateDataPixels(int width, int height){
@@ -119,39 +131,65 @@ void bmp24_readPixelValue(t_bmp24 * image,int x,int y,FILE * file){
 
 }
 
-t_bmp24 * bmp24_loadImage(const char *filename){
-  FILE *file = fopen(filename, "rb");
-  if (file == NULL) {
-    printf("Error : could not open file %s\n", filename);
+t_bmp24 * bmp24_loadImage(const char *filename) {
+    FILE *file = fopen(filename, "rb");
+    if (file == NULL) {
+        printf("Error : could not open file %s\n", filename);
+        return NULL;
+    }
+
+    t_bmp_header header;
+    // Lire l'en-tête BMP depuis le début du fichier
+    file_rawRead(BITMAP_MAGIC, &header, sizeof(t_bmp_header), 1, file);
+
+    // Vérifier le magic number BMP
+    if (header.type != BMP_TYPE) {
+        printf("Error: Not a valid BMP file (magic: 0x%X)\n", header.type);
+        fclose(file);
+        return NULL;
+    }
+    printf("%d\n",sizeof(t_bmp_header));
+    t_bmp_info header_info;
+    // Lire les informations de l'image après l'en-tête principal
+    file_rawRead(HEADER_SIZE, &header_info, sizeof(t_bmp_info), 1, file);
+
+    int width = header_info.width;
+    int height = header_info.height;
+    int colorDepth = header_info.bits;
+
+    printf("Image dimensions: %dx%d, Color depth: %d\n", width, height, colorDepth);
+
+    // Vérifier que c'est bien du 24-bit
+    if (colorDepth != 24) {
+        printf("Error: Only 24-bit BMP files are supported (found %d-bit)\n", colorDepth);
+        fclose(file);
+        return NULL;
+    }
+
+    t_bmp24 *img = bmp24_allocate(width, height, colorDepth);
+    if (!img) {
+        printf("Error: Failed to allocate image structure\n");
+        fclose(file);
+        return NULL;
+    }
+
+    img->header = header;
+    img->header_info = header_info;
+
+    // Allouer les données pixel
+    img->data = bmp24_allocateDataPixels(img->width, img->height);
+    if (img->data == NULL) {
+        printf("Error : memory allocation failed for pixel data\n");
+        bmp24_free(img);
+        fclose(file);
+        return NULL;
+    }
+
     fclose(file);
-    return NULL;
-  }
-
-  t_bmp_header header;
-  file_rawRead(BITMAP_MAGIC, &header, sizeof(t_bmp_header), 1, file);
-  t_bmp_info header_info;
-  file_rawRead(HEADER_SIZE, &header_info, sizeof(t_bmp_info), 1, file);
-
-  int width = header_info.width;
-  int height = header_info.height;
-  int colorDepth = header_info.bits;
-
-  t_bmp24 *img = bmp24_allocate(width, height, colorDepth);
-
-  img->header = header;
-  img->header_info = header_info;
-
-  img->data = bmp24_allocateDataPixels(img->width, img->height);
-  if (img->data == NULL) {
-    printf("Error : memory allocation failed for t_bmp24\n");
-    bmp24_free(img);
-    fclose(file);
-    return NULL;
-  }
-  fclose(file);
-  printf("Succesfully loaded !\n");
-  return img;
+    return img;
 }
+
+
 
 void bmp24_saveImage(t_bmp24 *img, const char *filename){
   FILE *file = fopen(filename, "wb");
