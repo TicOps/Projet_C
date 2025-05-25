@@ -38,7 +38,6 @@ t_pixel ** bmp24_allocateDataPixels(int width, int height){
             return NULL;
         }
     }
-    printf("Pixel matrix %dx%d successfully allocated\n", width, height);
     return pixels;
 }
 
@@ -62,7 +61,6 @@ void bmp24_freeDataPixels(t_pixel **pixels, int height) {
         }
     }
     free(pixels);
-    printf("Pixel matrix successfully released\n");
 }
 
 t_bmp24 * bmp24_allocate(int width, int height, int colorDepth){
@@ -164,13 +162,10 @@ void bmp24_writePixelValue(t_bmp24 * image, int x, int y, FILE * file) {
         return;
     }
 
-    // Dans un BMP, y=0 est en bas, donc on inverse
     int y_pos = image->height - 1 - y;
 
     uint32_t header_offset = image->header.offset;
     uint32_t offset = header_offset + (y_pos * image->width * 3) + (x * 3);
-
-    // Format : RGB -> BGR
     uint8_t bgr[3];
     bgr[0] = image->data[y][x].blue;
     bgr[1] = image->data[y][x].green;
@@ -194,7 +189,6 @@ void bmp24_writePixelData (t_bmp24 * image, FILE * file) {
     }else {
         printf("Error : invalid image size (%d,%d)\n", image->width, image->height);
     }
-    printf("successfully writing %dx%d pixels\n", image->width, image->height);
 }
 
 t_bmp24 * bmp24_loadImage(const char *filename) {
@@ -205,10 +199,8 @@ t_bmp24 * bmp24_loadImage(const char *filename) {
     }
 
     t_bmp_header header;
-    // Lire l'en-tête BMP depuis le début du fichier
     file_rawRead(BITMAP_MAGIC, &header, sizeof(t_bmp_header), 1, file);
 
-    // Vérifier le type de fichier BMP
     if (header.type != BMP_TYPE) {
         printf("Error: Not a valid BMP file (magic: 0x%X)\n", header.type);
         fclose(file);
@@ -216,7 +208,6 @@ t_bmp24 * bmp24_loadImage(const char *filename) {
     }
 
     t_bmp_info header_info;
-    // Lire les informations de l'image après l'en-tête principal
     file_rawRead(HEADER_SIZE, &header_info, sizeof(t_bmp_info), 1, file);
 
     int width = header_info.width;
@@ -225,7 +216,6 @@ t_bmp24 * bmp24_loadImage(const char *filename) {
 
     printf("Image dimensions: %dx%d, Color depth: %d\n", width, height, colorDepth);
 
-    // Vérifier que c'est bien du 24-bit
     if (colorDepth != 24) {
         printf("Error: Only 24-bit BMP files are supported (found %d-bit)\n", colorDepth);
         fclose(file);
@@ -331,7 +321,6 @@ void bmp24_brightness(t_bmp24 * img, int value) {
     }
     for (int y = 0; y < img->height; y++) {
         for (int x = 0; x < img->width; x++) {
-            //rouge
             int newRed = img->data[y][x].red + value;
             if (newRed > 255) {
                 newRed = 255;
@@ -339,8 +328,7 @@ void bmp24_brightness(t_bmp24 * img, int value) {
                 newRed = 0;
             }
             img->data[y][x].red = (uint8_t)newRed;
-            
-            //vert
+
             int newGreen = img->data[y][x].green + value;
             if (newGreen > 255) {
                 newGreen = 255;
@@ -349,7 +337,6 @@ void bmp24_brightness(t_bmp24 * img, int value) {
             }
             img->data[y][x].green = (uint8_t)newGreen;
             
-            //bleu
             int newBlue = img->data[y][x].blue + value;
             if (newBlue > 255) {
                 newBlue = 255;
@@ -376,8 +363,7 @@ t_pixel bmp24_convolution(t_bmp24 * img, int x, int y, float ** kernel, int kern
     float sumRed = 0.0;
     float sumGreen = 0.0;
     float sumBlue = 0.0;
-    
-    // Application du noyau de convolution
+
     // Parcours du kernel de -radius à +radius
     for (int j = -radius; j <= radius; j++) {
         for (int i = -radius; i <= radius; i++) {
@@ -443,8 +429,6 @@ void bmp24_boxBlur(t_bmp24 * img) {
             free(boxBlurKernel);
             return;
         }
-        
-        // Remplissage du noyau : chaque élément = 1/9
         for (int j = 0; j < 3; j++) {
             boxBlurKernel[i][j] = 1.0f / 9.0f;
         }
@@ -454,7 +438,6 @@ void bmp24_boxBlur(t_bmp24 * img) {
     t_bmp24 *tempImg = bmp24_allocate(img->width, img->height, img->colorDepth);
     if (!tempImg) {
         printf("Error: Memory allocation for temporary image!\n");
-        // Libération du kernel
         for (int i = 0; i < 3; i++) {
             free(boxBlurKernel[i]);
         }
@@ -473,7 +456,6 @@ void bmp24_boxBlur(t_bmp24 * img) {
         }
     }
     
-    // Application du filtre box blur (en évitant les bords)
     int radius = 1; // Pour un noyau 3x3, le rayon est 1
     for (int y = radius; y < img->height - radius; y++) {
         for (int x = radius; x < img->width - radius; x++) {
@@ -495,10 +477,296 @@ void bmp24_boxBlur(t_bmp24 * img) {
     printf("Box blur applied successfully!\n");
 }
 
-/* int main(void){
-    char *filename = "flowers_color.bmp";
-    t_bmp24 *img = bmp24_loadImage(filename);
-    char *filename2 = "copy_flowers_color.bmp";
-    bmp24_saveImage(img,filename2);
-    return 1;
-} */
+void bmp24_gaussianBlur(t_bmp24 * img) {
+    // Vérification des paramètres
+    if (!img || !img->data) {
+        printf("Error: No picture loaded or missing data!\n");
+        return;
+    }
+
+    // Création du noyau Gaussian blur 3x3
+    float **gaussianKernel = (float **)malloc(3 * sizeof(float *));
+    if (!gaussianKernel) {
+        printf("Error: Memory allocation for kernel!\n");
+        return;
+    }
+    
+    for (int i = 0; i < 3; i++) {
+        gaussianKernel[i] = (float *)malloc(3 * sizeof(float));
+        if (!gaussianKernel[i]) {
+            printf("Error: Memory allocation for kernel row!\n");
+            // Libération de ce qui a déjà été alloué
+            for (int j = 0; j < i; j++) {
+                free(gaussianKernel[j]);
+            }
+            free(gaussianKernel);
+            return;
+        }
+    }
+    
+    gaussianKernel[0][0] = 1.0f / 16.0f; gaussianKernel[0][1] = 2.0f / 16.0f; gaussianKernel[0][2] = 1.0f / 16.0f;
+    gaussianKernel[1][0] = 2.0f / 16.0f; gaussianKernel[1][1] = 4.0f / 16.0f; gaussianKernel[1][2] = 2.0f / 16.0f;
+    gaussianKernel[2][0] = 1.0f / 16.0f; gaussianKernel[2][1] = 2.0f / 16.0f; gaussianKernel[2][2] = 1.0f / 16.0f;
+    
+    // Création d'une image temporaire pour stocker les résultats
+    t_bmp24 *tempImg = bmp24_allocate(img->width, img->height, img->colorDepth);
+    if (!tempImg) {
+        printf("Error: Memory allocation for temporary image!\n");
+        // Libération du kernel
+        for (int i = 0; i < 3; i++) {
+            free(gaussianKernel[i]);
+        }
+        free(gaussianKernel);
+        return;
+    }
+    
+    // Copie des en-têtes
+    tempImg->header = img->header;
+    tempImg->header_info = img->header_info;
+    
+    // Copie de l'image originale dans l'image temporaire
+    for (int y = 0; y < img->height; y++) {
+        for (int x = 0; x < img->width; x++) {
+            tempImg->data[y][x] = img->data[y][x];
+        }
+    }
+
+    int radius = 1;
+    for (int y = radius; y < img->height - radius; y++) {
+        for (int x = radius; x < img->width - radius; x++) {
+            t_pixel newPixel = bmp24_convolution(tempImg, x, y, gaussianKernel, 3);
+            
+            // Mise à jour du pixel dans l'image originale
+            img->data[y][x] = newPixel;
+        }
+    }
+    
+    // Libération de la mémoire
+    bmp24_free(tempImg);
+    for (int i = 0; i < 3; i++) {
+        free(gaussianKernel[i]);
+    }
+    free(gaussianKernel);
+    
+    printf("Gaussian blur applied successfully!\n");
+}
+
+void bmp24_sharpen(t_bmp24 * img) {
+    // Vérification des paramètres
+    if (!img || !img->data) {
+        printf("Error: No picture loaded or missing data!\n");
+        return;
+    }
+
+    // Création du noyau Sharpen 3x3
+    float **sharpenKernel = (float **)malloc(3 * sizeof(float *));
+    if (!sharpenKernel) {
+        printf("Error: Memory allocation for kernel!\n");
+        return;
+    }
+    
+    for (int i = 0; i < 3; i++) {
+        sharpenKernel[i] = (float *)malloc(3 * sizeof(float));
+        if (!sharpenKernel[i]) {
+            printf("Error: Memory allocation for kernel row!\n");
+            // Libération de ce qui a déjà été alloué
+            for (int j = 0; j < i; j++) {
+                free(sharpenKernel[j]);
+            }
+            free(sharpenKernel);
+            return;
+        }
+    }
+    sharpenKernel[0][0] = 0.0f;  sharpenKernel[0][1] = -1.0f; sharpenKernel[0][2] = 0.0f;
+    sharpenKernel[1][0] = -1.0f; sharpenKernel[1][1] = 5.0f;  sharpenKernel[1][2] = -1.0f;
+    sharpenKernel[2][0] = 0.0f;  sharpenKernel[2][1] = -1.0f; sharpenKernel[2][2] = 0.0f;
+    
+    // Création d'une image temporaire pour stocker les résultats
+    t_bmp24 *tempImg = bmp24_allocate(img->width, img->height, img->colorDepth);
+    if (!tempImg) {
+        printf("Error: Memory allocation for temporary image!\n");
+        // Libération du kernel
+        for (int i = 0; i < 3; i++) {
+            free(sharpenKernel[i]);
+        }
+        free(sharpenKernel);
+        return;
+    }
+    
+    // Copie des en-têtes
+    tempImg->header = img->header;
+    tempImg->header_info = img->header_info;
+    
+    // Copie de l'image originale dans l'image temporaire
+    for (int y = 0; y < img->height; y++) {
+        for (int x = 0; x < img->width; x++) {
+            tempImg->data[y][x] = img->data[y][x];
+        }
+    }
+    int radius = 1;
+    for (int y = radius; y < img->height - radius; y++) {
+        for (int x = radius; x < img->width - radius; x++) {
+            t_pixel newPixel = bmp24_convolution(tempImg, x, y, sharpenKernel, 3);
+            img->data[y][x] = newPixel;
+        }
+    }
+    
+    // Libération de la mémoire
+    bmp24_free(tempImg);
+    for (int i = 0; i < 3; i++) {
+        free(sharpenKernel[i]);
+    }
+    free(sharpenKernel);
+    
+    printf("Sharpen applied successfully!\n");
+}
+
+void bmp24_outline(t_bmp24 * img) {
+    // Vérification des paramètres
+    if (!img || !img->data) {
+        printf("Error: No picture loaded or missing data!\n");
+        return;
+    }
+    float **outlineKernel = (float **)malloc(3 * sizeof(float *));
+    if (!outlineKernel) {
+        printf("Error: Memory allocation for kernel!\n");
+        return;
+    }
+    
+    for (int i = 0; i < 3; i++) {
+        outlineKernel[i] = (float *)malloc(3 * sizeof(float));
+        if (!outlineKernel[i]) {
+            printf("Error: Memory allocation for kernel row!\n");
+            // Libération de ce qui a déjà été alloué
+            for (int j = 0; j < i; j++) {
+                free(outlineKernel[j]);
+            }
+            free(outlineKernel);
+            return;
+        }
+    }
+    
+    outlineKernel[0][0] = -1.0f; outlineKernel[0][1] = -1.0f; outlineKernel[0][2] = -1.0f;
+    outlineKernel[1][0] = -1.0f; outlineKernel[1][1] = 8.0f;  outlineKernel[1][2] = -1.0f;
+    outlineKernel[2][0] = -1.0f; outlineKernel[2][1] = -1.0f; outlineKernel[2][2] = -1.0f;
+    
+    // Création d'une image temporaire pour stocker les résultats
+    t_bmp24 *tempImg = bmp24_allocate(img->width, img->height, img->colorDepth);
+    if (!tempImg) {
+        printf("Error: Memory allocation for temporary image!\n");
+        // Libération du kernel
+        for (int i = 0; i < 3; i++) {
+            free(outlineKernel[i]);
+        }
+        free(outlineKernel);
+        return;
+    }
+    
+    // Copie des en-têtes
+    tempImg->header = img->header;
+    tempImg->header_info = img->header_info;
+    
+    // Copie de l'image originale dans l'image temporaire
+    for (int y = 0; y < img->height; y++) {
+        for (int x = 0; x < img->width; x++) {
+            tempImg->data[y][x] = img->data[y][x];
+        }
+    }
+   
+    int radius = 1;
+    for (int y = radius; y < img->height - radius; y++) {
+        for (int x = radius; x < img->width - radius; x++) {
+            t_pixel newPixel = bmp24_convolution(tempImg, x, y, outlineKernel, 3);
+            img->data[y][x] = newPixel;
+        }
+    }
+    
+    // Libération de la mémoire
+    bmp24_free(tempImg);
+    for (int i = 0; i < 3; i++) {
+        free(outlineKernel[i]);
+    }
+    free(outlineKernel);
+    
+    printf("Outline applied successfully!\n");
+}
+
+void bmp24_emboss(t_bmp24 * img) {
+    // Vérification des paramètres
+    if (!img || !img->data) {
+        printf("Error: No picture loaded or missing data!\n");
+        return;
+    }
+
+    float **embossKernel = (float **)malloc(3 * sizeof(float *));
+    if (!embossKernel) {
+        printf("Error: Memory allocation for kernel!\n");
+        return;
+    }
+    
+    for (int i = 0; i < 3; i++) {
+        embossKernel[i] = (float *)malloc(3 * sizeof(float));
+        if (!embossKernel[i]) {
+            printf("Error: Memory allocation for kernel row!\n");
+            // Libération de ce qui a déjà été alloué
+            for (int j = 0; j < i; j++) {
+                free(embossKernel[j]);
+            }
+            free(embossKernel);
+            return;
+        }
+    }
+    
+    embossKernel[0][0] = -2.0f; embossKernel[0][1] = -1.0f; embossKernel[0][2] = 0.0f;
+    embossKernel[1][0] = -1.0f; embossKernel[1][1] = 1.0f;  embossKernel[1][2] = 1.0f;
+    embossKernel[2][0] = 0.0f;  embossKernel[2][1] = 1.0f;  embossKernel[2][2] = 2.0f;
+    t_bmp24 *tempImg = bmp24_allocate(img->width, img->height, img->colorDepth);
+    if (!tempImg) {
+        printf("Error: Memory allocation for temporary image!\n");
+        // Libération du kernel
+        for (int i = 0; i < 3; i++) {
+            free(embossKernel[i]);
+        }
+        free(embossKernel);
+        return;
+    }
+    
+    tempImg->header = img->header;
+    tempImg->header_info = img->header_info;
+    
+    for (int y = 0; y < img->height; y++) {
+        for (int x = 0; x < img->width; x++) {
+            tempImg->data[y][x] = img->data[y][x];
+        }
+    }
+
+    int radius = 1;
+    for (int y = radius; y < img->height - radius; y++) {
+        for (int x = radius; x < img->width - radius; x++) {
+            t_pixel newPixel = bmp24_convolution(tempImg, x, y, embossKernel, 3);
+            
+            int red = newPixel.red + 128;
+            int green = newPixel.green + 128;
+            int blue = newPixel.blue + 128;
+
+            if (red > 255) red = 255;
+            if (red < 0) red = 0;
+            if (green > 255) green = 255;
+            if (green < 0) green = 0;
+            if (blue > 255) blue = 255;
+            if (blue < 0) blue = 0;
+            
+            img->data[y][x].red = (uint8_t)red;
+            img->data[y][x].green = (uint8_t)green;
+            img->data[y][x].blue = (uint8_t)blue;
+        }
+    }
+
+    bmp24_free(tempImg);
+    for (int i = 0; i < 3; i++) {
+        free(embossKernel[i]);
+    }
+    free(embossKernel);
+    
+    printf("Emboss applied successfully!\n");
+}

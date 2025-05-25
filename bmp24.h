@@ -100,5 +100,9 @@ void file_rawWrite (uint32_t position, void * buffer, uint32_t size, size_t n, F
 
 // Fonctions de filtress 24
 void bmp24_boxBlur(t_bmp24 * img);
+void bmp24_gaussianBlur(t_bmp24 * img);
+void bmp24_sharpen(t_bmp24 * img);
+void bmp24_outline(t_bmp24 * img);
+void bmp24_emboss(t_bmp24 * img);
 
 #endif //BMP24_H

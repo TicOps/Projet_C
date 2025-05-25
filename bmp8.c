@@ -110,7 +110,6 @@ void bmp8_printInfo(t_bmp8 *img){
         printf("Error : No picture loaded !\n");
         return;
     }
-    //Affiche les info de type unsigned int.
     printf("Picture's datas :\n");
     printf("Width -> %u\n",img->width);
     printf("Height -> %u\n",img->height);
@@ -207,7 +206,7 @@ void bmp8_applyFilter(t_bmp8 * img, float ** kernel, int kernelSize) {
                     int imgX = x + i;
                     int imgY = y + j;
                     
-                    // Position dans le noyau (décalé pour avoir des indices positifs)
+                    // Position dans le noyau
                     int kernelX = i + radius;
                     int kernelY = j + radius;
                     
@@ -227,7 +226,5 @@ void bmp8_applyFilter(t_bmp8 * img, float ** kernel, int kernelSize) {
             img->data[y * img->width + x] = (unsigned char)sum;
         }
     }
-    
-    // Libération de la mémoire temporaire
     free(tempData);
 }

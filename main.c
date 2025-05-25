@@ -1,4 +1,3 @@
-//Ecrire le code test
 #include "bmp8.h"
 #include "bmp24.h"
 #include <stdio.h>
@@ -215,10 +214,7 @@ int main(){
                 printf("Choose a filter to apply :\n1. Negative\n2. Brightness\n3. grayscale\n4. Box blur\n5. Gaussian Blur\n6. Sharpen\n7. Outline\n8. emboss\n9. Back\n");
                 scanf("%d",&filtre);
                 printf("Your choice : %d\n-----------------------------------------------\n\n",filtre);
-
-                //Modifier pour chaque filtre -----
                 if(filtre == 1){
-                    //Exécution du négatif
                     bmp24_negative(fichier24);
                     printf("Negative applied\n");
                 }
@@ -226,45 +222,38 @@ int main(){
                 if(filtre == 2){
                     printf("Value for brightness : \n");
                     scanf("%d",&value);
-                    // Exécution de brightness
                     bmp24_brightness(fichier24,value);
                     printf("Brightness has been modified of %d\n",value);
                 }
 
                 if(filtre == 3){
-                    // Exécution de la conversion en niveaux de gris
                     bmp24_grayscale(fichier24);
                     printf("Grayscale applied\n");
                 }
 
                 if (filtre == 4) {
-                    // Box blur - utilisation de la nouvelle fonction
                     bmp24_boxBlur(fichier24);
                     printf("Box blur applied\n");
                 }
 
                 if (filtre == 5) {
-                    // Gaussian blur - à implémenter
-                    // bmp24_gaussianBlur(fichier24);
-                    printf("Gaussian blur - Function not implemented yet\n");
+                    bmp24_gaussianBlur(fichier24);
+                    printf("Gaussian blur applied\n");
                 } 
 
                 if (filtre == 6) {
-                    // Sharpen - à implémenter
-                    // bmp24_sharpen(fichier24);
-                    printf("Sharpen - Function not implemented yet\n");
+                    bmp24_sharpen(fichier24);
+                    printf("Sharpen applied\n");
                 }
 
                 if (filtre == 7) {
-                    // Outline - à implémenter
-                    // bmp24_outline(fichier24);
-                    printf("Outline - Function not implemented yet\n");
+                    bmp24_outline(fichier24);
+                    printf("Outline applied\n");
                 }
 
                 if (filtre == 8) {
-                    // Emboss - à implémenter
-                    // bmp24_emboss(fichier24);
-                    printf("Emboss - Function not implemented yet\n");
+                    bmp24_emboss(fichier24);
+                    printf("Emboss applied\n");
                 }
             }
             //On quitte l'interface
