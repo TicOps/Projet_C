@@ -125,7 +125,7 @@ void bmp24_readPixelValue(t_bmp24 * image,int x,int y,FILE * file){
 
     uint8_t pixel[3];
 
-    file_rawRead(offset, &pixel, sizeof(t_pixel), 1, file);
+    file_rawRead(offset, &pixel,1, sizeof(t_pixel),file);
 
     image->data[y][x].red = pixel[2];
     image->data[y][x].green = pixel[1];
@@ -495,12 +495,10 @@ void bmp24_boxBlur(t_bmp24 * img) {
     printf("Box blur applied successfully!\n");
 }
 
-int main(void){
+/* int main(void){
     char *filename = "flowers_color.bmp";
     t_bmp24 *img = bmp24_loadImage(filename);
     char *filename2 = "copy_flowers_color.bmp";
     bmp24_saveImage(img,filename2);
     return 1;
-}
-
-
+} */

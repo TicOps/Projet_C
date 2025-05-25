@@ -266,9 +266,7 @@ int main(){
                     // bmp24_emboss(fichier24);
                     printf("Emboss - Function not implemented yet\n");
                 }
-            break;
             }
-
             //On quitte l'interface
             if(reponse == 4){
                 //On libère la mémoire pour éviter les fuites de données
