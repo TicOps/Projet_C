@@ -63,7 +63,8 @@ t_bmp24 * bmp24_allocate(int width, int height, int colorDepth){
   t_bmp24 *bmp24 = (t_bmp24 *)malloc(sizeof(t_bmp24));
   if (!bmp24) {
     printf("Error : t_bmp24 can't be allocated\n");
-    bmp24_free(data);
+    free(data);
+    bmp24_free(bmp24);
     return NULL;
   }
   bmp24->width = width;
@@ -71,7 +72,8 @@ t_bmp24 * bmp24_allocate(int width, int height, int colorDepth){
   bmp24->colorDepth = colorDepth;
   if (colorDepth != 24) {
     printf("Error : invalid color depth (%d)\n", colorDepth);
-    bmp24_free(data);
+    free(data);
+    bmp24_free(bmp24);
     return NULL;
   }
   return bmp24;
@@ -92,6 +94,28 @@ void bmp24_free(t_bmp24 *img){
 
 
 void bmp24_readPixelValue(t_bmp24 * image,int x,int y,FILE * file){
+  if (!(image->height%4 == 0) || !(image->width%4 == 0)) {
+    printf("Error : invalid image size (%d,%d)\n", image->height, image->width);
+    return;
+  }
+  int pos;
+  x = image->width - x * image->height;
+  pos = x + y;
+  uint32_t header_offset = HEADER_SIZE + INFO_SIZE + BITMAP_OFFSET;
+  t_pixel *pixel = (t_pixel *) malloc(sizeof(t_pixel));
+  if (file == NULL) {
+    printf("Error : could not open file");
+    fclose(file);
+    return;
+  }
+  file_rawRead(header_offset, &pixel, sizeof(t_pixel), 1, file);
+  uint8_t temp = pixel->red;
+  printf("pixel_value:%d,%d,%d\n", pixel->red, pixel->green, pixel->blue);
+  pixel->red = pixel->blue;
+  pixel->blue = temp;
+  printf("pixel_value:%d,%d,%d\n", pixel->red, pixel->green, pixel->blue);
+  free(pixel);
+  fclose(file);
 
 }
 
@@ -104,9 +128,9 @@ t_bmp24 * bmp24_loadImage(const char *filename){
   }
 
   t_bmp_header header;
-  file_rawRead(BITMAP_MAGIG, &header, sizeof(t_bmp_header), 1, file);
+  file_rawRead(BITMAP_MAGIC, &header, sizeof(t_bmp_header), 1, file);
   t_bmp_info header_info;
-  file_rawRead(HEADER_SIZE, header_info, sizeof(t_bmp_info), 1, file);
+  file_rawRead(HEADER_SIZE, &header_info, sizeof(t_bmp_info), 1, file);
 
   int width = header_info.width;
   int height = header_info.height;
@@ -135,8 +159,17 @@ void bmp24_saveImage(t_bmp24 *img, const char *filename){
     fclose(file);
     return;
   }
-  file_rawWrite(BITMAP_MAGIG, &header, sizeof(t_bmp_header), 1, file);
+  file_rawWrite(BITMAP_MAGIC, &img->header, sizeof(t_bmp_header), 1, file);
   file_rawWrite(HEADER_SIZE, &img->header_info, sizeof(t_bmp_info), 1, file);
 
   fclose(file);
+}
+
+int main(void){
+  t_bmp24 *img = bmp24_allocate(512,512,24);
+  char *filename = "flowers_color.bmp";
+  FILE *file = fopen(filename, "rb");
+  bmp24_readPixelValue(img,0,0,file);
+  fclose(file);
+  return 1;
 }

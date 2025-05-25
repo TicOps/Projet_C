@@ -33,7 +33,7 @@ int main(){
             printf("Choose a filter to apply :\n1. Negative\n2. Brightness\n3. Treshold\n4. Box blur\n5. Gaussian Blur\n6. Sharpen\n7. Outline\n8. emboss\n9. Back\n");
             scanf("%d",&filtre);
             printf("Your choice : %d\n-----------------------------------------------\n",filtre);
-                
+
             if(filtre == 1){
                 //Exécution du négatif
                 bmp8_negative(fichier);
@@ -80,21 +80,21 @@ int main(){
                 for (int i = 0; i < 3; i++) {
                     gaussianBlur[i] = (float *)malloc(3 * sizeof(float));
                 }
-            
+
                 // Remplissage du noyau
                 gaussianBlur[0][0] = 1.0/16.0; gaussianBlur[0][1] = 2.0/16.0; gaussianBlur[0][2] = 1.0/16.0;
                 gaussianBlur[1][0] = 2.0/16.0; gaussianBlur[1][1] = 4.0/16.0; gaussianBlur[1][2] = 2.0/16.0;
                 gaussianBlur[2][0] = 1.0/16.0; gaussianBlur[2][1] = 2.0/16.0; gaussianBlur[2][2] = 1.0/16.0;
-            
+
                 bmp8_applyFilter(fichier, gaussianBlur, 3);
                 printf("Gaussian blur applied\n");
-            
+
                 // Libération de la mémoire
                 for (int i = 0; i < 3; i++) {
                     free(gaussianBlur[i]);
                 }
                 free(gaussianBlur);
-            } 
+            }
 
             if (filtre == 6) {
                 // Sharpen
@@ -102,15 +102,15 @@ int main(){
                 for (int i = 0; i < 3; i++) {
                     sharpen[i] = (float *)malloc(3 * sizeof(float));
                 }
-            
+
                 // Remplissage du noyau
                 sharpen[0][0] = 0.0; sharpen[0][1] = -1.0; sharpen[0][2] = 0.0;
                 sharpen[1][0] = -1.0; sharpen[1][1] = 5.0; sharpen[1][2] = -1.0;
                 sharpen[2][0] = 0.0; sharpen[2][1] = -1.0; sharpen[2][2] = 0.0;
-            
+
                 bmp8_applyFilter(fichier, sharpen, 3);
                 printf("Sharpen applied\n");
-            
+
                 // Libération de la mémoire
                 for (int i = 0; i < 3; i++) {
                     free(sharpen[i]);
@@ -124,15 +124,15 @@ int main(){
                 for (int i = 0; i < 3; i++) {
                     outline[i] = (float *)malloc(3 * sizeof(float));
                 }
-            
+
                 // Remplissage du noyau
                 outline[0][0] = -1.0; outline[0][1] = -1.0; outline[0][2] = -1.0;
                 outline[1][0] = -1.0; outline[1][1] = 8.0; outline[1][2] = -1.0;
                 outline[2][0] = -1.0; outline[2][1] = -1.0; outline[2][2] = -1.0;
-            
+
                 bmp8_applyFilter(fichier, outline, 3);
                 printf("Outline applied\n");
-            
+
                 // Libération de la mémoire
                 for (int i = 0; i < 3; i++) {
                     free(outline[i]);
@@ -146,15 +146,15 @@ int main(){
                 for (int i = 0; i < 3; i++) {
                     emboss[i] = (float *)malloc(3 * sizeof(float));
                 }
-            
+
                 // Remplissage du noyau
                 emboss[0][0] = -2.0; emboss[0][1] = -1.0; emboss[0][2] = 0.0;
                 emboss[1][0] = -1.0; emboss[1][1] = 1.0; emboss[1][2] = 1.0;
                 emboss[2][0] = 0.0; emboss[2][1] = 1.0; emboss[2][2] = 2.0;
-            
+
                 bmp8_applyFilter(fichier, emboss, 3);
                 printf("Emboss applied\n");
-            
+
                 // Libération de la mémoire
                 for (int i = 0; i < 3; i++) {
                     free(emboss[i]);
@@ -162,7 +162,7 @@ int main(){
                 free(emboss);
             }
         }
-        
+
         //Quatrième cas, on affiche les informations de l'image
         if(reponse == 4){
             bmp8_printInfo(fichier);
