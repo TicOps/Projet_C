@@ -94,4 +94,7 @@ void file_rawRead (uint32_t position, void * buffer, uint32_t size, size_t n, FI
 
 void file_rawWrite (uint32_t position, void * buffer, uint32_t size, size_t n, FILE * file);
 
+// Fonctions de filtress 24
+void bmp24_boxBlur(t_bmp24 * img);
+
 #endif //BMP24_H
