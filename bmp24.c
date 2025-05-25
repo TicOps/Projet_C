@@ -419,13 +419,13 @@ void bmp24_boxBlur(t_bmp24 * img) {
     printf("Box blur applied successfully!\n");
 }
 
-/* int main(void){
+int main(void){
   t_bmp24 *img = bmp24_allocate(512,512,24);
   char *filename = "flowers_color.bmp";
   FILE *file = fopen(filename, "rb");
   bmp24_readPixelValue(img,0,0,file);
   fclose(file);
   return 1;
-} */
+}
 
 
