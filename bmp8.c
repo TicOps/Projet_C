@@ -51,7 +51,7 @@ t_bmp8 * bmp8_loadImage(const char * filename){
     fread(img->data, sizeof(unsigned char),img->dataSize, file);
     fclose(file);
 
-    printf("Succesfully loaded ! \n");
+    printf("Succesfully loaded !\n");
     return img;
 };
 

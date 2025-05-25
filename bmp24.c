@@ -36,12 +36,12 @@ void bmp24_freeDataPixels(t_pixel **pixels, int height) {
         printf("Warning: Attempt to free a NULL pointer\n");
         return;
     }
-
+    
     if (height <= 0) {
         printf("Error : invalid height (%d)\n", height);
         return;
     }
-
+    
     // Libérer chaque ligne de pixels
     for (int i = 0; i < height; i++) {
         if (pixels[i]) {
@@ -200,7 +200,7 @@ void bmp24_grayscale(t_bmp24 * img) {
             uint8_t blue = img->data[y][x].blue;
             //On fait la moyenne des 3
             uint8_t gray = (red + green + blue) / 3;
-
+            
             // Affectation de la valeur de gris à toutes les composantes
             img->data[y][x].red = gray;
             img->data[y][x].green = gray;
@@ -225,7 +225,7 @@ void bmp24_brightness(t_bmp24 * img, int value) {
                 newRed = 0;
             }
             img->data[y][x].red = (uint8_t)newRed;
-
+            
             //vert
             int newGreen = img->data[y][x].green + value;
             if (newGreen > 255) {
@@ -234,7 +234,7 @@ void bmp24_brightness(t_bmp24 * img, int value) {
                 newGreen = 0;
             }
             img->data[y][x].green = (uint8_t)newGreen;
-
+            
             //bleu
             int newBlue = img->data[y][x].blue + value;
             if (newBlue > 255) {
@@ -254,15 +254,15 @@ t_pixel bmp24_convolution(t_bmp24 * img, int x, int y, float ** kernel, int kern
         t_pixel errorPixel = {0, 0, 0};
         return errorPixel;
     }
-
+    
     // Calcul du rayon du kernel (n = kernelSize / 2)
     int radius = kernelSize / 2;
-
+    
     // Variables pour stocker les sommes pondérées de chaque composante
     float sumRed = 0.0;
     float sumGreen = 0.0;
     float sumBlue = 0.0;
-
+    
     // Application du noyau de convolution
     // Parcours du kernel de -radius à +radius
     for (int j = -radius; j <= radius; j++) {
@@ -270,13 +270,13 @@ t_pixel bmp24_convolution(t_bmp24 * img, int x, int y, float ** kernel, int kern
             // Position du pixel dans l'image originale
             int imgX = x + i;
             int imgY = y + j;
-
+            
             // Vérification des limites de l'image
             if (imgX >= 0 && imgX < img->width && imgY >= 0 && imgY < img->height) {
                 // Position dans le noyau
                 int kernelX = i + radius;
                 int kernelY = j + radius;
-
+                
                 // Récupération du pixel de l'image
                 t_pixel currentPixel = img->data[imgY][imgX];
                 sumRed += currentPixel.red * kernel[kernelY][kernelX];
@@ -288,19 +288,19 @@ t_pixel bmp24_convolution(t_bmp24 * img, int x, int y, float ** kernel, int kern
     // Gestion des valeurs hors limites [0, 255]
     if (sumRed > 255) sumRed = 255;
     if (sumRed < 0) sumRed = 0;
-
+    
     if (sumGreen > 255) sumGreen = 255;
     if (sumGreen < 0) sumGreen = 0;
-
+    
     if (sumBlue > 255) sumBlue = 255;
     if (sumBlue < 0) sumBlue = 0;
-
+    
     // Création du pixel résultat
     t_pixel resultPixel;
     resultPixel.red = (uint8_t)sumRed;
     resultPixel.green = (uint8_t)sumGreen;
     resultPixel.blue = (uint8_t)sumBlue;
-
+    
     return resultPixel;
 }
 
@@ -317,7 +317,7 @@ void bmp24_boxBlur(t_bmp24 * img) {
         printf("Error: Memory allocation for kernel!\n");
         return;
     }
-
+    
     for (int i = 0; i < 3; i++) {
         boxBlurKernel[i] = (float *)malloc(3 * sizeof(float));
         if (!boxBlurKernel[i]) {
@@ -329,13 +329,13 @@ void bmp24_boxBlur(t_bmp24 * img) {
             free(boxBlurKernel);
             return;
         }
-
+        
         // Remplissage du noyau : chaque élément = 1/9
         for (int j = 0; j < 3; j++) {
             boxBlurKernel[i][j] = 1.0f / 9.0f;
         }
     }
-
+    
     // Création d'une image temporaire pour stocker les résultats
     t_bmp24 *tempImg = bmp24_allocate(img->width, img->height, img->colorDepth);
     if (!tempImg) {
@@ -347,37 +347,37 @@ void bmp24_boxBlur(t_bmp24 * img) {
         free(boxBlurKernel);
         return;
     }
-
+    
     // Copie des en-têtes
     tempImg->header = img->header;
     tempImg->header_info = img->header_info;
-
+    
     // Copie de l'image originale dans l'image temporaire
     for (int y = 0; y < img->height; y++) {
         for (int x = 0; x < img->width; x++) {
             tempImg->data[y][x] = img->data[y][x];
         }
     }
-
+    
     // Application du filtre box blur (en évitant les bords)
     int radius = 1; // Pour un noyau 3x3, le rayon est 1
     for (int y = radius; y < img->height - radius; y++) {
         for (int x = radius; x < img->width - radius; x++) {
             // Utilisation de bmp24_convolution pour calculer le nouveau pixel
             t_pixel newPixel = bmp24_convolution(tempImg, x, y, boxBlurKernel, 3);
-
+            
             // Mise à jour du pixel dans l'image originale
             img->data[y][x] = newPixel;
         }
     }
-
+    
     // Libération de la mémoire
     bmp24_free(tempImg);
     for (int i = 0; i < 3; i++) {
         free(boxBlurKernel[i]);
     }
     free(boxBlurKernel);
-
+    
     printf("Box blur applied successfully!\n");
 }
 
@@ -389,3 +389,5 @@ void bmp24_boxBlur(t_bmp24 * img) {
   fclose(file);
   return 1;
 } */
+
+
