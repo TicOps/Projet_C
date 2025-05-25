@@ -149,6 +149,7 @@ t_bmp24 * bmp24_loadImage(const char *filename){
     return NULL;
   }
   fclose(file);
+  printf("Succesfully loaded !\n");
   return img;
 }
 
@@ -165,7 +166,7 @@ void bmp24_saveImage(t_bmp24 *img, const char *filename){
   fclose(file);
 }
 
-void bmp24_negative(t_bmp * img){
+void bmp24_negative(t_bmp24 * img){
   // Vérification des paramètres
   if (!img || !img->data) {
     printf("Error: No picture loaded or missing data!\n");
@@ -183,11 +184,11 @@ void bmp24_negative(t_bmp * img){
   }
 }
 
-int main(void){
+/* int main(void){
   t_bmp24 *img = bmp24_allocate(512,512,24);
   char *filename = "flowers_color.bmp";
   FILE *file = fopen(filename, "rb");
   bmp24_readPixelValue(img,0,0,file);
   fclose(file);
   return 1;
-}
+} */
